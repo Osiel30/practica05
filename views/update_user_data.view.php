@@ -27,22 +27,30 @@
         <form class="register-form" id="register-form" action="" method="POST">
             <label for="username">Nombre de usuario: </label>
             <input type="text" name="username" id="username-input">
-            <label for="current-password">Contraseña</label>
+            <label for="current-password">Contraseña Actual</label>
             <input type="password" name="current-password" id="current-password-input">
-            <label for="password">Contraseña</label>
+            <label for="password">Nueva Contraseña</label>
             <input type="password" name="password" id="password-input">
-            <label for="confirm-password">confirmar contraseña</label>
+            <label for="confirm-password">Confirmar contraseña</label>
             <input type="password" name="confirm-password" id="confirm-password-input">
             <label for="first-name">Nombre</label>
             <input type="text" name="first-name" id="first-name-input">
             <label for="last-name">apellido</label>
             <input type="text" name="last-name" id="last-name-input">
-            <label for="genre">Genero (M/F)</label>
-            <input type="text" name="genre" id="genre-input">
+
+            <label for="genre">Género (M/F)</label>
+            <select name="genre" id="genre-input">
+                <option value="" disabled selected>Seleccione una opción</option>
+                <option value="M">M</option>
+                <option value="F">F</option>
+            </select>
+
+
+
             <label for="born-date">Fecha de nacimiento</label>
             <input type="date" name="born-date" id="born-date-input">
             <br>
-            <input type="submit" value="REGISTRARME COMO Q NO">
+            <input type="submit" value="Actualizarme">
         </form>
     </div>
 

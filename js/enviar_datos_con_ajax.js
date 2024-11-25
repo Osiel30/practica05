@@ -10,49 +10,58 @@ const txtApellidos = document.getElementById('txt-apellidos');
 const formPostAjaxJson = document.getElementById('form-post-ajax-json');
 const txtNombreJson = document.getElementById('txt-nombre-json');
 const txtApellidosJson = document.getElementById('txt-apellidos-json');
-
 const txtOtroDato = document.querySelector("#txt-otro-dato");
 const inputArchivo = document.querySelector("#input-archivo");
 const btnEnviarArchivo = document.querySelector("#btn-enviar-archivo");
 
 // Evento click del botón btnEnviarArchivo
 btnEnviarArchivo.addEventListener("click", async e => {
-    
     e.preventDefault();
 
-    // Se valida que se haya seleccionado un archivo
     if (!inputArchivo.files.length) {
+        alert("Por favor selecciona un archivo.");
         inputArchivo.focus();
         return;
     }
 
-    // Para enviar el archivo se hará una petición de tipo
-    // multipart/form-data, para esto ocuparemos un object de 
-    // tipo FormData para serializar los archivos y datos a enviar
-    const datos = new FormData();
-    datos.append('archivo', inputArchivo.files[0]);
-    datos.append('otroDato', txtOtroDato.value);
-
-    // Se hace la petición AJAX usando la API de fetch, esta
-    // petición es de tipo POST y dentro del payload de este
-    // request (content-type: multipart/form-data) estará
-    // el archivo y otro dato.
-    const res = await fetch(    // AJAX call
-            `${APP_ROOT}ajax/guardar_archivo.php`, 
-            { method: "POST", body: datos });
-
-    // Obtenemos un JS object a partir del JSON regresado por el server
-    const resObj = await res.json();  
-
-    if (resObj.error) {   // si regresa un error, lo mostramos
-        alert(resObj.error);
+    const archivo = inputArchivo.files[0];
+    const tiposPermitidos = ["image/jpeg", "image/png", "image/gif"];
+    if (!tiposPermitidos.includes(archivo.type)) {
+        alert("Solo se permiten archivos JPG, PNG o GIF.");
+        return;
     }
-    if (resObj.mensaje) {  // mensaje
-        inputArchivo.value = "";  // para limpiar el input file
-        txtOtroDato.value = "";  // para limpiar el input text
-        alert(resObj.mensaje);
-    }    
+
+    const maxSize = 2 * 1024 * 1024;
+    if (archivo.size > maxSize) {
+        alert("El archivo no debe superar los 2 MB.");
+        return;
+    }
+
+    const datos = new FormData();
+    datos.append("archivo", archivo);
+    datos.append("otroDato", txtOtroDato.value);
+
+    try {
+        const res = await fetch(`${APP_ROOT}ajax/guardar_archivo.php`, { method: "POST", body: datos });
+        if (!res.ok) {
+            throw new Error("Error en la respuesta del servidor");
+        }
+        const resObj = await res.json();
+
+        if (resObj.error) {
+            alert(resObj.error);
+        } else if (resObj.mensaje) {
+            inputArchivo.value = "";
+            txtOtroDato.value = "";
+            alert(resObj.mensaje);
+        }
+    } catch (error) {
+        alert("Ocurrió un error al subir el archivo.");
+        console.error(error);
+    }
 });
+
+
 
 // Evento click del botón btnObtenerFechaHora.
 btnObtenerFechaHora.addEventListener('click', e => {

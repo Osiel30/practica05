@@ -104,6 +104,15 @@ registerForm.addEventListener("submit", (e) => {
         icon: "error",
     });
   }
+  if (genre === "") {
+    Swal.fire({
+        title: "Error",
+        text: "Por favor, seleccione un género.",
+        icon: "error",
+    });
+    return;
+}
+
 
   if (!passwordRegex.test(password)) {
     Swal.fire({

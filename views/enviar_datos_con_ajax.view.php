@@ -85,7 +85,7 @@
                 <h2>Enviar Archivos con AJAX</h2>
                 <table>
                     <tbody>
-                        <tr>
+                        <tr> 
                             <td><label for="txt-otro-dato">Otro Dato: </label></td>
                             <td><input type="text" name="otroDato" id="txt-otro-dato" /></td>
                         </tr>
@@ -100,6 +100,103 @@
                     </tbody>
                 </table>
             </div>
+            <div class="file-list">
+
+    <h2>Mis Archivos</h2>
+    <label for="mes">Mes:</label>
+    <select id="mes">
+        <option value="1">Enero</option>
+        <!-- Resto de los meses -->
+    </select>
+    <label for="anio">Año:</label>
+    <input type="number" id="anio" value="2024" />
+
+    <button id="filtrar">Filtrar</button>
+
+    <table id="archivos-table">
+        <thead>
+            <tr>
+                <th>Archivo</th>
+                <th>Fecha Subida</th>
+                <th>Peso (KB)</th>
+                <th>Descargas</th>
+                <th>Público</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+        <script>
+document.getElementById('filtrar').addEventListener('click', () => {
+    const mes = document.getElementById('mes').value;
+    const anio = document.getElementById('anio').value;
+
+    fetch(`${APP_ROOT}ajax/get_archivos.php?mes=${mes}&anio=${anio}`)
+        .then(res => res.json())
+        .then(data => {
+            const tbody = document.querySelector('#archivos-table tbody');
+            tbody.innerHTML = '';
+
+            data.forEach(archivo => {
+                const row = `
+                    <tr>
+                        <td><a href="archivo.php?id=${archivo.id}" target="_blank">${archivo.nombre_original}</a></td>
+                        <td>${archivo.fecha_hora_subida}</td>
+                        <td>${archivo.peso_kb}</td>
+                        <td>${archivo.cant_descargas}</td>
+                        <td>
+                            <input type="checkbox" class="publico" data-id="${archivo.id}" ${archivo.es_publico ? 'checked' : ''} />
+                        </td>
+                        <td>
+                            <button class="eliminar" data-id="${archivo.id}">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
+
+            document.querySelectorAll('.publico').forEach(checkbox => {
+                checkbox.addEventListener('change', togglePublico);
+            });
+
+            document.querySelectorAll('.eliminar').forEach(btn => {
+                btn.addEventListener('click', eliminarArchivo);
+            });
+        });
+});
+
+function togglePublico(e) {
+    const id = e.target.dataset.id;
+    const publico = e.target.checked ? 1 : 0;
+
+    fetch(`${APP_ROOT}ajax/toggle_publico.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, publico })
+    }).then(res => res.json())
+      .then(data => alert(data.mensaje));
+}
+
+function eliminarArchivo(e) {
+    const id = e.target.dataset.id;
+
+    if (!confirm("¿Deseas eliminar este archivo?")) return;
+
+    fetch(`${APP_ROOT}ajax/eliminar_archivo.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+    }).then(res => res.json())
+      .then(data => {
+          alert(data.mensaje);
+          if (!data.error) e.target.closest('tr').remove();
+      });
+}
+</script>
+<td><a href="<?=APP_ROOT?>ajax/descargar_archivo.php?id=${archivo.id}" target="_blank">${archivo.nombre_original}</a></td>
+
+        </tbody>
+    </table>
+</div>
 
         </div>  <!-- End left column -->
 
@@ -113,6 +210,8 @@
     </div>
 
     <script src="<?=APP_ROOT?>js/enviar_datos_con_ajax.js"></script>
+    
+    
 
 </body>
 </html>

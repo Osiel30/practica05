@@ -72,6 +72,14 @@ if (!preg_match('/^[a-z_]+$/', $username)) {
 }
 
 
+/*if (strlen($password) < 8) {
+    echo json_encode([
+        'status' => 'error',
+        'message' => 'Password must be at least 8 characters long and contain at least one uppercase and one lowercase letter'
+    ]);
+    exit;
+}
+*/
 if (strlen($password) < 8 || !preg_match('/[A-Z]/', $password) || !preg_match('/[a-z]/', $password)) {
     echo json_encode([
         'status' => 'error',
@@ -79,6 +87,7 @@ if (strlen($password) < 8 || !preg_match('/[A-Z]/', $password) || !preg_match('/
     ]);
     exit;
 }
+
 
 if ($password != $confirmPassword) {
     echo json_encode([
@@ -123,6 +132,7 @@ if ($stmt->execute()) {
         'message' => 'User registered successfully'
     ]);
     exit;
+    require APP_PATH . "views/login.view.php";
 }
 
 echo json_encode([

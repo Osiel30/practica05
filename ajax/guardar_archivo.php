@@ -1,42 +1,61 @@
 <?php
-
-// Para obtener el archivo con las configuraciones de la app
-require "../config.php";
-
-// La respuesta va a ser un JSON
+require "../config.php"; // Archivo de configuración
 header("Content-Type: application/json");
 
-$resObj = ["error" => NULL, "mensaje" => NULL];
-
-// Validación de que se envió el archivo
-if (empty($_FILES) || !isset($_FILES["archivo"])) {
-    $resObj["error"] = "Archivo no especificado";
-    echo json_encode($resObj);
-    exit();  // finalizamos la ejecución de este archivo PHP
+$uploadDir = DIR_UPLOAD; // Ruta para guardar los archivos
+if (!file_exists($uploadDir)) {
+    mkdir($uploadDir, 0777, true);
 }
 
-// Obtención de los datos del archivo subido
-$archivo = $_FILES["archivo"];  // Assoc array con los datos del archivo subido
-$tamaño = $archivo["size"];  // tamaño del archivo en bytes
-$nombreArchivo = $archivo["name"];  // nombre original del archivo subido
-$rutaTemporal = $archivo["tmp_name"];  // Obtención de la ruta temporal del archivo
+$resObj = ["error" => null, "mensaje" => null];
 
-// Se determina la ruta donde se guardará el archivo subido
-$rutaAGuardar = DIR_UPLOAD . $nombreArchivo;
-
-// Guardamos el archivo del directorio temporal a la ruta final
-$seGuardoArchivo = move_uploaded_file($rutaTemporal, $rutaAGuardar); 
-if (!$seGuardoArchivo) {  // No se guardo?
-    $resObj["error"] = "No se pudo guardar el archivo :(";
-    echo json_encode($resObj);
-    exit();
+if (!isset($_FILES['archivo']) || $_FILES['archivo']['error'] !== UPLOAD_ERR_OK) {
+    echo json_encode(["error" => "Error al subir el archivo"]);
+    exit;
 }
 
-// Además de archivos, podermos recibir más datos
-$otroDato = filter_input(INPUT_POST, "otroDato");
+// Validar archivo
+$archivo = $_FILES['archivo'];
+$otroDato = $_POST['otroDato'] ?? '';
+$tiposPermitidos = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif'];
+$maxSize = 2 * 1024 * 1024;
 
-// establecemos el mensaje de respuesta
-$resObj["mensaje"] = "Archivo guardado correctamente. OtroDato = \"$otroDato\"";
+if (!in_array($archivo['type'], $tiposPermitidos)) {
+    echo json_encode(["error" => "Tipo de archivo no permitido"]);
+    exit;
+}
 
-// Regresamos el JSON de la respuesta
+if ($archivo['size'] > $maxSize) {
+    echo json_encode(["error" => "El archivo supera el tamaño permitido"]);
+    exit;
+}
+
+// Generar nombre único
+$nombreUnico = uniqid() . "-" . basename($archivo['name']);
+$rutaArchivo = $uploadDir . $nombreUnico;
+
+// Guardar archivo
+if (move_uploaded_file($archivo['tmp_name'], $rutaArchivo)) {
+    // Guardar en base de datos
+    $pesoKB = round($archivo['size'] / 1024, 2);
+    $fechaHora = date('Y-m-d H:i:s');
+    $userId = $_SESSION['usuario_id']; // Ajusta según cómo manejas sesiones
+
+    // Insertar en tabla archivos
+    $stmt = $db->prepare("INSERT INTO archivos (usuario_id, nombre_original, nombre_archivo_guardado, peso_kb, fecha_hora_subida, es_publico, cant_descargas) 
+                           VALUES (?, ?, ?, ?, ?, 0, 0)");
+    $stmt->bind_param("issds", $userId, $archivo['name'], $nombreUnico, $pesoKB, $fechaHora);
+    $stmt->execute();
+
+    // Insertar en log general
+    $stmtLog = $db->prepare("INSERT INTO archivos_log_general (usuario_id, operacion, nombre_archivo, fecha_hora) 
+                             VALUES (?, 'subida', ?, ?)");
+    $stmtLog->bind_param("iss", $userId, $archivo['name'], $fechaHora);
+    $stmtLog->execute();
+
+    $resObj['mensaje'] = "Archivo subido con éxito";
+} else {
+    $resObj['error'] = "Error al guardar el archivo";
+}
+
 echo json_encode($resObj);

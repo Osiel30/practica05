@@ -4,5 +4,5 @@
  * Root de la app, esto para tener del lado del cliente en donde está la app
  * en relación al root del server para poder hacer peticiones AJAX.
  */
-const APP_ROOT = "/";
-const PHP_SERVER = "localhost:8000"
+const APP_ROOT = "/practica05/";
+const PHP_SERVER = "localhost/practica05";
